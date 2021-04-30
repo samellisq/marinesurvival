@@ -2,10 +2,10 @@
 % Please edit documentation in R/outputplotting_functions.R
 \name{p_link}
 \alias{p_link}
-\title{Link function}
+\title{Link Posterior estimates into output}
 \usage{
-p_link(ageseq, post, input.list)
+p_link(ageseq, post, input.list, species.i)
 }
 \description{
-Link function
+Works for both 1 and many species
 }

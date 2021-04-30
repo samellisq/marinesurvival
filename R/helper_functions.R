@@ -28,7 +28,7 @@ gomp.pdf = function(x, x.range = seq(0:150) ,a, b){
 #'
 #'@export
 get_ex = function(ageseq, sc.l, ex.at){
-  if(dims(sc.l) == 1){
+  if(dim(sc.l) == 1){
     i = which(abs(0.5-round(sc.l, 2)) == min(abs(0.5-round(sc.l, 2))))
     age.ex = ageseq[i]
   } else {
@@ -76,5 +76,40 @@ get_gomp_prior_shapes = function(species = "odontocete"){
   )
 
   return(comb)
+}
+
+#' Generate intitial values
+#'
+#' @export
+generate_inits = function(chains, input.list){
+
+  inits = vector(chains, mode = "list")
+  for(i in 1:chains){
+    inits[[i]] =
+      list(b = stats::runif(input.list$Nspecies, max = 0.05),
+           a = stats::runif(input.list$Nspecies, max = 0.2),
+           bbar = stats::runif(1, max = 0.03),
+           abar = stats::runif(1, max = 0.2))
+  }
+  return(inits)
+}
+
+
+#' Get list of parameters actually active in the modell
+#'
+#' @export
+get_activepars = function(out, mod, input.list){
+  activepars = rownames(out)[!stringr::str_detect(rownames(out), "true_age")]
+  for(i in 1:input.list$Nspecies){
+    if(input.list$include_samplebias_error[i] == 0){
+      activepars <- activepars[activepars != paste("s", "[", i, "]", sep = "")]
+    }
+    if(input.list$include_popchange_error[i] == 0){
+      activepars <- activepars[activepars != paste("r", "[", i, "]", sep = "")]
+    }
+  }
+  activepars = activepars[!(activepars %in% c("abar_theta", "bbar_theta"))]
+  activepars = activepars[!stringr::str_detect(activepars, "rho")]
+  return(activepars)
 }
 
