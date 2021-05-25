@@ -86,6 +86,10 @@ plot_modtosample = function(age.seq, post, input.list, staninputdf, species = "a
     minages = rep.int(0, length(species.is))
   }
 
+  if(!("n.dead" %in% names(staninputdf))){
+    staninputdf$n.dead = staninputdf$n
+  }
+
   species.plots = list()
   species.plots.data = list()
   for(k in 1:length(species.is)){
@@ -193,7 +197,11 @@ plot_posteriorsurvival = function(post, age.seq, input.list, names.key = NULL, s
 #' Age X plot
 #'
 #' @export
-plot_ageX = function(X, post, age.seq, species.is, minages = NULL, names.key = NULL, return.data = FALSE){
+plot_ageX = function(X, post, age.seq, species.is = NULL, minages = NULL, names.key = NULL, return.data = FALSE){
+
+  if(is.null(species.is)){
+    species.is = 1
+  }
 
   if(is.null(minages)){
     minages = rep.int(0, length(species.is))
