@@ -8,7 +8,7 @@ plot_ageX(
   X,
   post,
   age.seq,
-  species.is,
+  species.is = NULL,
   minages = NULL,
   names.key = NULL,
   return.data = FALSE

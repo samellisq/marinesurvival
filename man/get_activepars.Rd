@@ -4,7 +4,7 @@
 \alias{get_activepars}
 \title{Get list of parameters actually active in the modell}
 \usage{
-get_activepars(mod, input.list, out = NULL)
+get_activepars(out, mod, input.list)
 }
 \description{
 Get list of parameters actually active in the modell

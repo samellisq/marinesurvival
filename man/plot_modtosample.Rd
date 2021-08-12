@@ -9,7 +9,7 @@ plot_modtosample(
   post,
   input.list,
   staninputdf,
-  species = "all",
+  datasets = "all",
   minages = NULL,
   names.key = NULL,
   return.data = FALSE

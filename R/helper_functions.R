@@ -100,7 +100,7 @@ generate_inits = function(chains, input.list){
 #' @export
 get_activepars = function(out, mod, input.list){
   activepars = rownames(out)[!stringr::str_detect(rownames(out), "true_age")]
-  for(i in 1:input.list$Nspecies){
+  for(i in 1:input.list$Ndatasets){
     if(input.list$include_samplebias_error[i] == 0){
       activepars <- activepars[activepars != paste("s", "[", i, "]", sep = "")]
     }

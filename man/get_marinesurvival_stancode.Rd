@@ -7,5 +7,14 @@
 get_marinesurvival_stancode(mod.data.list)
 }
 \description{
-Choose model and generate approiate code
+Becasue the code is an indexing nightmare need three versions
+1. One species, one datasets
+2. One species, many datasets
+3. Many species, one or many datasets
+}
+\details{
+All are very similar but with slightly differetn indexing structure (and no
+latent variable if only one species).
+
+This code chooses the right code for a given dataset
 }

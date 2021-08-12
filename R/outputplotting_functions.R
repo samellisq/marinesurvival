@@ -3,11 +3,17 @@
 #' Works for both 1 and many species
 #'
 #' @export
-p_link = function(ageseq, post, input.list, species.i){
+p_link = function(ageseq, post, input.list, species.i, dataset.size = NULL){
   if(input.list$Nspecies >1){
     R = length(ageseq)
     lam = list()
-    speceis.sample.size = length(input.list$sample_ages[input.list$sample_species == species.i])
+    if(is.null(dataset.size)){
+      #so if there is no sample size provided calcualte it for all examples of the species (which could be one)
+      speceis.sample.size = length(input.list$sample_ages[input.list$sample_species == species.i])
+    } else {
+      speceis.sample.size = dataset.size
+    }
+
     for(i in 1:R){
       S = max(dim(post[[1]]))
       lams = numeric(S)
@@ -21,7 +27,7 @@ p_link = function(ageseq, post, input.list, species.i){
           rho =0
         }
         # if(input.list$include_samplebias_error[species.i] > 0){
-          S = input.list$BiasMat[i, species.i]*post$s[j, species.i] +1
+        S = input.list$BiasMat[i, species.i]*post$s[j, species.i] +1
         # } else {
         #   S = 1
         # }
@@ -51,7 +57,7 @@ p_link = function(ageseq, post, input.list, species.i){
           rho =0
         }
         # if(input.list$include_samplebias_error[species.i] > 0){
-          S = input.list$BiasMat[i, 1]*post$s[j] +1
+        S = input.list$BiasMat[i, 1]*post$s[j] +1
         # } else {
         #   S = 1
         # }
@@ -74,35 +80,51 @@ p_link = function(ageseq, post, input.list, species.i){
 #' Model to Sample Comparison plot
 #'
 #'@export
-plot_modtosample = function(age.seq, post, input.list, staninputdf, species = "all" , minages = NULL, names.key = NULL, return.data = FALSE){
+plot_modtosample = function(age.seq, post, input.list, staninputdf, datasets = "all" , minages = NULL, names.key = NULL, return.data = FALSE){
 
-  if(species == "all"){
-    species.is = seq(1,input.list$Nspecies,1)
+  if(datasets == "all"){
+    datasets.is = seq(1,input.list$Ndatasets,1)
   } else{
-    species.is = species
+    datasets.is = datasets
   }
 
+  species.is = input.list$species_vector[datasets.is]
+
   if(is.null(minages)){
-    minages = rep.int(0, length(species.is))
+    minages = rep.int(0, length(datasets.is))
   }
 
   if(!("n.dead" %in% names(staninputdf))){
     staninputdf$n.dead = staninputdf$n
   }
 
-  species.plots = list()
-  species.plots.data = list()
-  for(k in 1:length(species.is)){
+  datasets.plots = list()
+  datasets.plots.data = list()
 
-    lambda = p_link(ageseq = age.seq, post = post, input.list = mod.list, species.i = species.is[k])
+
+
+
+  for(k in 1:length(datasets.is)){
+
+    lambda = p_link(ageseq = age.seq,
+                    post = post,
+                    input.list = mod.list,
+                    species.i = species.is[k],
+                    dataset.size = sum(byage$n.dead[byage$dataset.num == k]))
     lmu = unlist(lapply(lambda,  mean))
     lci = dplyr::bind_rows(lapply(lambda,  PI))
     minage = minages[k]
 
-    sp.title = ifelse(is.null(names.key), k, names.key$species[k])
-    plotdata = dplyr::filter(staninputdf, species.num == k)
+    if(!is.null(names.key)){
+      sp.title = names.key$species[species.is][k]
+    } else {
+      sp.title = paste("dataset", k, sep = " ")
+    }
+
+    #sp.title = ifelse(is.null(datasets), k, names.key$species[k])
+    plotdata = dplyr::filter(staninputdf, dataset.num == k)
     plotdata$real.age = plotdata$age.adj + minages[k]
-    species.plots.data[[k]] = plotdata
+    datasets.plots.data[[k]] = plotdata
 
     if(!return.data){
       gplot =
@@ -113,20 +135,20 @@ plot_modtosample = function(age.seq, post, input.list, staninputdf, species = "a
         ggplot2::ggtitle(sp.title)+
         ggplot2::scale_x_continuous(limits = c(minages[k]-1, input.list$species_maxages[k]*1.25+minages[k] ))
 
-      species.plots[[k]] = gplot
+      datasets.plots[[k]] = gplot
     }
 
   }
 
   if(!return.data){
-    # colchooser = ifelse(length(species.plots) >3, 3, min(c(2,length(species.plots))))
-    colchooser = floor(sqrt(length(species.plots)))
+    # colchooser = ifelse(length(species.plots) >3, 3, min(c(2,length(datasets.plots))))
+    colchooser = floor(sqrt(length(datasets.plots)))
     # print()
     # sp.grid = grid.arrange(grobs = species.plots, ncol = colchooser)
-    sp.grid = cowplot::plot_grid(plotlist = species.plots, ncol = colchooser)
+    sp.grid = cowplot::plot_grid(plotlist = datasets.plots, ncol = colchooser)
     return(sp.grid)
   } else{
-    return(species.plots.data)
+    return(datasets.plots.data)
   }
 
 
