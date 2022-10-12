@@ -2,10 +2,10 @@
 % Please edit documentation in R/helper_functions.R
 \name{get_activepars}
 \alias{get_activepars}
-\title{Get list of parameters actually active in the modell}
+\title{Get list of parameters actually active in the model}
 \usage{
 get_activepars(out, mod, input.list)
 }
 \description{
-Get list of parameters actually active in the modell
+Get list of parameters actually active in the model
 }

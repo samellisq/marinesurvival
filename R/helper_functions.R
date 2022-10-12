@@ -83,19 +83,33 @@ get_gomp_prior_shapes = function(species = "odontocete"){
 #' @export
 generate_inits = function(chains, input.list){
 
-  inits = vector(chains, mode = "list")
-  for(i in 1:chains){
-    inits[[i]] =
-      list(b = stats::runif(input.list$Nspecies, max = 0.05),
-           a = stats::runif(input.list$Nspecies, max = 0.2),
-           bbar = stats::runif(1, max = 0.03),
-           abar = stats::runif(1, max = 0.2))
+  if(length(unique(input.list$species_sex_vector))==1){
+    inits = vector(chains, mode = "list")
+    for(i in 1:chains){
+      inits[[i]] =
+        list(b = stats::runif(input.list$Nspecies, max = 0.05),
+             a = stats::runif(input.list$Nspecies, max = 0.2),
+             bbar = stats::runif(1, max = 0.03),
+             abar = stats::runif(1, max = 0.2))
+    }
+
+  } else {
+    inits = vector(chains, mode = "list")
+    for(i in 1:chains){
+      inits[[i]] =
+        list(b = stats::runif(input.list$Nspecies, max = 0.05),
+             a = stats::runif(input.list$Nspecies, max = 0.2),
+             bbar = rep(stats::runif(1, max = 0.03),2),
+             abar = rep(stats::runif(1, max = 0.2),2)
+        )
+    }
   }
+
   return(inits)
 }
 
 
-#' Get list of parameters actually active in the modell
+#' Get list of parameters actually active in the model
 #'
 #' @export
 get_activepars = function(out, mod, input.list){

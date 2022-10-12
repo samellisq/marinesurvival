@@ -8,8 +8,7 @@ plot_modtosample(
   age.seq,
   post,
   input.list,
-  staninputdf,
-  datasets = "all",
+  dataset.is = NULL,
   minages = NULL,
   names.key = NULL,
   return.data = FALSE
