@@ -161,7 +161,7 @@ plot_modtosample = function(age.seq, post, input.list, dataset.is = NULL , minag
                     input.list = mod.list,
                     dataset.i = dataset.is[k])
     lmu = unlist(lapply(lambda,  mean))
-    lci = dplyr::bind_rows(lapply(lambda,  PI))
+    lci = dplyr::bind_rows(lapply(lambda,  rethinking::PI))
     minage = minages[dataset.is[k]]
 
     if(!is.null(names.key)){
