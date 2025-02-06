@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+guide/
+Development functions.R
+stanmodcode_function preR3.R
