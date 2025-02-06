@@ -151,7 +151,7 @@ parameters{
   real<lower=0,upper=1> b;
   real<lower=0,upper=1> a;
   real <lower=-0.5,upper=0.5> r; // so this is r change over half the max lifespan. Currently both +ve and negative change but might have more info in some species.
-  real <lower=0,upper=0.5> s; // at the moment it assumes that indiivuals above age S are more likely to be sampled but that can be changed
+  real r<lower=-2,upper=2> s; // at the moment it assumes that indiivuals above age S are more likely to be sampled but that can be changed
   vector[Nsamples] true_age; // there is no way to exclude this factor (or others) if not being used. Bit messy but makes no difference
 
 }
@@ -184,13 +184,13 @@ model{
     }
   }
 
-  //Do the fitting
+//Do the fitting
+  true_age ~ normal(sample_ages, 1);
   for(i in 1:Nsamples){
     if(include_age_est_error[dataset_vector[i]] >0){
-      true_age ~ normal(sample_ages, age_error_sd);
+      sample_ages ~ normal(true_age, age_error_sd);
       ages_true[i] = bin_search(round(true_age[i]), 0, Nages);
-    } else {
-      true_age ~ normal(sample_ages, 1);
+    } else { // where include_age_est_error = 0 the sampled age is assumed to be the true age
       ages_true[i] = sample_ages[i];
     }
     //Recount age cohorts
@@ -356,13 +356,13 @@ model{
     }
   }
 
-  //Do the fitting
+//Do the fitting
+  true_age ~ normal(sample_ages, 1);
   for(i in 1:Nsamples){
     if(include_age_est_error[dataset_vector[i]] >0){
-      true_age ~ normal(sample_ages, age_error_sd);
+      sample_ages ~ normal(true_age, age_error_sd);
       ages_true[i] = bin_search(round(true_age[i]), 0, Nages);
-    } else {
-      true_age ~ normal(sample_ages, 1);
+    } else {  // where include_age_est_error = 0 the sampled age is assumed to be the true age
       ages_true[i] = sample_ages[i];
     }
     //Recount age cohorts
@@ -560,13 +560,13 @@ model{
     }
   }
 
-  //Do the fitting
+//Do the fitting
+  true_age ~ normal(sample_ages, 1);
   for(i in 1:Nsamples){
     if(include_age_est_error[dataset_vector[i]] >0){
-      true_age ~ normal(sample_ages, age_error_sd);
+      sample_ages ~ normal(true_age, age_error_sd);
       ages_true[i] = bin_search(round(true_age[i]), 0, Nages);
-    } else {
-      true_age ~ normal(sample_ages, 1);
+    } else {  // where include_age_est_error = 0 the sampled age is assumed to be the true age
       ages_true[i] = sample_ages[i];
     }
     //Recount age cohorts
@@ -754,13 +754,13 @@ model{
     }
   }
 
-  //Do the fitting
+//Do the fitting
+  true_age ~ normal(sample_ages, 1);
   for(i in 1:Nsamples){
     if(include_age_est_error[dataset_vector[i]] >0){
-      true_age ~ normal(sample_ages, age_error_sd);
+      sample_ages ~ normal(true_age, age_error_sd);
       ages_true[i] = bin_search(round(true_age[i]), 0, Nages);
-    } else {
-      true_age ~ normal(sample_ages, 1);
+    } else {  // where include_age_est_error = 0 the sampled age is assumed to be the true age
       ages_true[i] = sample_ages[i];
     }
     //Recount age cohorts
@@ -853,6 +853,10 @@ model{
 
 
 get_marinesurvival_manyspecies.oneormanydatasets_twosexes_stancode = function(){
+  ## This version of the model runs the basic model over multiple species at the same time.
+  ## It assumes that values for a given species-sex the alpha and beta parameters of the Gompertz mortality model are drawn from a distribution of alpha and beta values over all species in the samples
+  ## It should only be used for closely related species wehre a common "taxon mortality pattern" can be assumed.
+
   code =
   "
   functions{
@@ -957,15 +961,15 @@ model{
     //newdead_obs[i] = 0;
       DeadMat[i,j] =0;
     }
-  }
+  } 
 
-  //Do the fitting
+//Do the fitting
+  true_age ~ normal(sample_ages, 1);
   for(i in 1:Nsamples){
     if(include_age_est_error[dataset_vector[i]] >0){
-      true_age ~ normal(sample_ages, age_error_sd);
+      sample_ages ~ normal(true_age, age_error_sd);
       ages_true[i] = bin_search(round(true_age[i]), 0, Nages);
-    } else {
-      true_age ~ normal(sample_ages, 1);
+    } else {  // where include_age_est_error = 0 the sampled age is assumed to be the true age
       ages_true[i] = sample_ages[i];
     }
     //Recount age cohorts
