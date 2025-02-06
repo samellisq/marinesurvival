@@ -1,0 +1,173 @@
+---
+title: "Using_marinesurvival_with_marinelifehistdata"
+author: "S Ellis"
+date: "`r format(Sys.time(), '%d/%m/%Y')`"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+The aim of this vignette is to provide an example of how to use this marinesurvival pacakge- here using the data from the marinelifehistdata package.
+
+## Getting started
+
+Load the packages
+
+```{r setup}
+library(marinelifehistdata)
+library(marinesurvival)
+```
+
+The models can be run in either rstan or cmdstanr. Here we use cmdstanr. A version of of one of these functions must be installed and functioning for the models to run.
+
+For cmdstanr installation. See https://mc-stan.org/cmdstanr/articles/cmdstanr.html for instillation instructions (this is not an ordinary package)
+
+```{r}
+library(cmdstanr)
+library(rstan)
+```
+
+```{r, include=FALSE, echo=FALSE}
+set_cmdstan_path(path = "D:/cmdstan/cmdstan-2.28.1")
+require(Matrix)
+```
+
+This guide also requires functions from the tidyverse suite
+
+```{r}
+library(tidyverse)
+```
+
+## Preparing the data
+
+Here we use the Northern right-whale dolphin as an example. 
+
+```{r, messege = TRUE}
+eg.datasets = get_lifehist_data(data.type = "age-structure", species = "NorthernRightWhaleDolphin", sex = NULL) #NULL will give data for both 
+
+```
+
+The model requires a named list with the elements (unless otherwise stated descriptions refer to all datasets combined):
+
+1. *Nages* . The number of ages in the data (e.g. 0-10, Nages = 11)
+2. *Nsamples*. The numbers of samples
+3. *age* . Vector of all ages (e.g. seq(0, maximum age, by = 1)).
+4. *sample_ages*. Vector of ages of all whales in the sample (datsets combined). Adjusted so that age at maturity = 0.
+5. *Nspecies* . Number of species-sex in the datasets (so female+male of same species = 2).
+6. *Ndatasets*. Number of datasets in sample (length(datasets))
+7. *Npopulations*. Number of populations from which the datasets are drawn (i.e. F and M samples can come from the same population)
+8. *species_vector*. Vector of length Ndatasets indicating which species-sex each dataset belongs to
+9. *population_vector*. Vector of length Ndatasets indicating which populaiton each dataset is drawn from.
+10. *species_sex_vector* Vector of length Nspecies indicating if each species-sex is female (1) or male (2)
+11. *species_maxages*. Vector of length Nspecies indicaiting maximum achieved age of each species-sex present in the data
+12. *prior_a_s1*. Prior for alpha mortality parameter. Beta distribution shape parameter 1.
+13. *prior_a_s2*. Prior for alpha mortality parameter. Beta distribution shape parameter 2.
+14. *prior_b_s1*. Prior for beta mortality parameter. Beta distribution shape parameter 1.
+15. *prior_b_s2*. Prior for beta mortality parameter. Beta distribution shape parameter 2.
+16. *include_age_est_error*. Vector of length Ndatasets indiciating whether to apply (1) or not (0) the age estimation error in the model. 
+17. *age_error_sd* Vector of length Nsamples indicating the standard deviation of age estimation around the reported sample to apply when accounting for age error.
+18. *include_samplebias_error* Vector of length Ndatasets indicating whether to apply (1) or not apply (0) samplining bias estimations to each dataset.
+19. *BiasMat*. A Ndataset x Nages matrix, with each cell indicating whether sampling bias is expected (1) or not expected (0) at a given age. This will be ignored if include_samplebias_error for that dataset is 0 (but still that column still needs to be inlcuded).
+20. *direction_samplebias* Vector of length Ndataset indiciating the direction of sampling bias (-1 undersampled, 1 oversampled, 0 unknown) applied to each dataset. For a given dataset this will be ignored if include_samplebias_error for that dataset is 0 (but still needs to be inlcuded).
+21. *include_popchange_error* vector of length Ndataset indicating whether to include population change error estiamtion for tht dataset (1 include, 0 do not include).
+22. *direction_popchange*. Vector of length Ndataset indicating direction of population change expected (-1 shrinking, 1 growing, 0 unknown/either). This is ignored if incldue_popchange_error for a given dataset = 0 but still needs to be included. 
+
+Note. That to interact with stan all vectors need to be included as arrays: simply apply *as.array()* to all vectors during input.
+
+
+The data above can be derived 'manually' from the data in the marine.lifehist.data package (or other data). However, the marine.lifehist.data package provides a function to do the leg work:
+
+```{r}
+
+mod.list = create_marinesurvival_modinput(eg.datasets)
+mod.list
+```
+
+## Running the model
+
+For simplicity, the stan code to run these models are stored as character vectors. There are several versions of the model for different variations of number of species and number of sexes. First job is to select the correct model code:
+
+```{r, messege = TRUE}
+stancode = get_marinesurvival_stancode(mod.list)
+```
+
+The code and data can then be combined in either rstan or cmdstanr- here we use rstan:
+
+```{r, eval = FALSE }
+modobj = stan_model(model_code = stancode)
+mod = sampling(
+      modobj,
+      data = mod.list,
+      chains = 4,
+      cores = 4,
+      iter = 2000,
+      init = generate_inits(4, mod.list)
+    )
+
+```
+
+```{r, include = FALSE}
+mod = readRDS("lifespanmod_FM.ONLYNorthernRightWhaleDolphin.modfsSR.HMC.RDS")
+```
+
+Ta da, model fit as an ordinary bayesian model. The summary data can be accessed but tends to be rather long becasue of all the estimates of unknown ages. The marinesurvival pacakge has a function called get_activeparameters to identify the non-age parameters present in the model which can then be used to somplfy the output. 
+
+```{r}
+#summary(mod)$summary
+out = summary(mod, digits = 4, depth = 2)$summary
+activepars = get_activepars(out = out, mod = mod, input.list = mod.list)
+out[rownames(out) %in% activepars,]
+```
+
+
+
+And that is that.
+
+## Exploring the model output
+
+The model is just a fitted Bayesian model so the posterior can be explored in any direction the user chooses. However, the marinesurvival package includes a couple of functions that automate some common functions. 
+
+1. Compare model to sample (there is a bit of fiddling first to get the inputs)
+
+```{r, message=FALSE}
+age.seq = seq(0, 100,1)
+post = rstan::extract(mod)
+ages.at.mat = 
+  marine.lifehist.speciesdata$species_age.maturity %>%
+  filter(species == "NorthernRightWhaleDolphin") %>%
+  arrange(sex)
+ages.at.mat = ages.at.mat$age.mat
+
+datasets.key = get_lifehist_data(data.type = "age-structure", species = "NorthernRightWhaleDolphin", sex = NULL, return.key = TRUE)[[1]]
+datasets.key$species.num = mod.list$species_vector
+datasets.key$dataset.num = seq(1,4, 1)
+
+mod.to.sample.plot = plot_modtosample(age.seq = age.seq, post = post, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key, datasetskey = datasets.key)
+mod.to.sample.plot
+```
+2. Plot survival curve
+
+```{r}
+plot_posteriorsurvival(post = post, age.seq = age.seq, input.list = mod.list, names.key = datasets.key, N = 150)
+```
+
+
+3. Get ordinary maximum lifespans (the age at which 90% of life years have been lived)
+
+```{r}
+plot_ageX(X = 0.1, post = post, age.seq = age.seq, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key)
+ageX.df = plot_ageX(X = 0.1, post = post, age.seq = age.seq, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key, return.data = TRUE)
+ageX.df
+```
+
+Here endeth the lesson. 
