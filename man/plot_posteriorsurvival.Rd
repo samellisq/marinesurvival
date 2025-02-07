@@ -9,8 +9,8 @@ plot_posteriorsurvival(
   age.seq,
   input.list,
   names.key = NULL,
-  sim.in = NULL,
-  N = 150
+  N = 150,
+  species.is = NULL
 )
 }
 \description{

@@ -7,11 +7,14 @@
 plot_ageX(
   X,
   post,
+  input.list,
   age.seq,
   species.is = NULL,
   minages = NULL,
+  THIN = NULL,
   names.key = NULL,
-  return.data = FALSE
+  return.data = FALSE,
+  return.summary = TRUE
 )
 }
 \description{

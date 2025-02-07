@@ -7,10 +7,12 @@
 run_simulation(
   sim.in = NULL,
   include_r = TRUE,
-  include_e = FALSE,
-  include_s = FALSE,
+  include_e = TRUE,
+  include_s = TRUE,
   sample_size = 200,
-  age.maturity = 0
+  age.maturity = 0,
+  show.plot = TRUE,
+  max.age = 150
 )
 }
 \description{

@@ -11,7 +11,8 @@ plot_modtosample(
   dataset.is = NULL,
   minages = NULL,
   names.key = NULL,
-  return.data = FALSE
+  return.data = FALSE,
+  datasetskey = NULL
 )
 }
 \description{
