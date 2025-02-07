@@ -418,7 +418,7 @@ plot_wrapper = function(species, stanmodel, plot.type, thin = 100){
   }
 
   if(plot.type == "d" | plot.type == "ageX.data"){
-    plot = marinwsurvival::plot_ageX(X = 0.1, post = post, age.seq = age.seq, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key, THIN = thin, return.data = TRUE)
+    plot = marinesurvival::plot_ageX(X = 0.1, post = post, age.seq = age.seq, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key, THIN = thin, return.data = TRUE)
     # plot = plot_ageX2(X = 0.1, post = post, age.seq = age.seq, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key, THIN = thin, return.data = TRUE)
   }
 
