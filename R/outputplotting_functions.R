@@ -286,7 +286,7 @@ plot_posteriorsurvival = function(post, age.seq, input.list, names.key = NULL, N
 #' Age X plot
 #'
 #' @export
-plot_ageX = function(X, post, input.list, age.seq, species.is = NULL, minages = NULL, names.key = NULL, return.data = FALSE, return.summary = TRUE){
+plot_ageX = function(X, post, input.list, age.seq, species.is = NULL, minages = NULL, THIN = NULL, names.key = NULL, return.data = FALSE, return.summary = TRUE){
 
   ##THIS DOESNT QUITE WORK
   if(is.null(species.is)){
@@ -304,6 +304,11 @@ plot_ageX = function(X, post, input.list, age.seq, species.is = NULL, minages = 
 
   for(i in 1:length(species.is)){
     p_lam = p_link_species(ageseq = age.seq, post = post, input.list = input.list, species.i = i)
+    if(!is.null(THIN)){
+      sample = sample(seq(1, length(p_lam[[1]]), 1),THIN)
+      for(t in 1:length(p_lam))
+        p_lam[[t]] = p_lam[[t]][sample]
+    }
     n.samples = length(p_lam[[1]])
     iter = rep(seq(1:n.samples), times = length(age.seq))
     age = rep(age.seq, each = n.samples)
@@ -335,7 +340,7 @@ plot_ageX = function(X, post, input.list, age.seq, species.is = NULL, minages = 
   ageX.plotdata = dplyr::bind_rows(ageX.plotdata)
 
   if(!is.null(names.key)){
-    ageX.plotdata = dplyr::left_join(ageX.plotdata, dplyr::select(names.key, species = species.num, species.name = species, sex = sex))
+    ageX.plotdata = dplyr::left_join(ageX.plotdata, dplyr::select(names.key, species = species.num, species.name = species, sex = sex) %>% distinct())
     ageX.plotdata$species.num = ageX.plotdata$species
     ageX.plotdata$species = ageX.plotdata$species.name
     ageX.plotdata = ageX.plotdata[,names(ageX.plotdata) != "species.name"]
@@ -372,4 +377,51 @@ plot_ageX = function(X, post, input.list, age.seq, species.is = NULL, minages = 
 
 }
 
+
+#' Wrapper for plots
+#'
+#' @export
+plot_wrapper = function(species, stanmodel, plot.type, thin = 100){
+
+  if(!plot.type %in% c("a", "b", "c", "d", "mod.to.sample", "post.survival", "ageX.plot", "ageX.data")){
+    warning("Error: plot.type must be either: a, b, c, d, mod.to.sample, post.survival, ageX.plot or ageX.data")
+    stop()
+  }
+
+  input.dat = marinelifehistdata::get_lifehist_data(data.type = "age-structure", species = species, sex = NULL)
+  mod.list = marinelifehistdata::create_marinesurvival_modinput(input.dat)
+
+  age.seq = seq(0, 100,1)
+  post = rstan::extract(mod)
+  SP = species
+  ages.at.mat =
+    marinelifehistdata::marine.lifehist.speciesdata$species_age.maturity %>%
+    filter(species == SP) %>%
+    arrange(sex)
+  ages.at.mat = ages.at.mat$age.mat
+
+  datasets.key = get_lifehist_data(data.type = "age-structure", species = species, sex = NULL, return.key = TRUE)[[1]]
+  datasets.key$species.num = mod.list$species_vector
+  datasets.key$dataset.num = seq(1,nrow(datasets.key), 1)
+
+  if(plot.type == "a" | plot.type == "mod.to.sample"){
+    plot = marinesurvival::plot_modtosample(age.seq = age.seq, post = post, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key, datasetskey = datasets.key)
+  }
+
+  if(plot.type == "b" | plot.type == "post.survival"){
+    plot = marinesurvival::plot_posteriorsurvival(post = post, age.seq = age.seq, input.list = mod.list, names.key = datasets.key, N = thin)
+  }
+
+  if(plot.type == "c" | plot.type == "ageX.plot"){
+    plot = marinesurvival::plot_ageX(X = 0.1, post = post, age.seq = age.seq, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key, THIN = thin)
+    # plot = plot_ageX2(X = 0.1, post = post, age.seq = age.seq, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key, THIN = thin)
+  }
+
+  if(plot.type == "d" | plot.type == "ageX.data"){
+    plot = marinwsurvival::plot_ageX(X = 0.1, post = post, age.seq = age.seq, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key, THIN = thin, return.data = TRUE)
+    # plot = plot_ageX2(X = 0.1, post = post, age.seq = age.seq, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key, THIN = thin, return.data = TRUE)
+  }
+
+  return(plot)
+}
 
