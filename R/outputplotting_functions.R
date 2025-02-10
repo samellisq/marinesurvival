@@ -158,7 +158,7 @@ plot_modtosample = function(age.seq, post, input.list, dataset.is = NULL , minag
 
     lambda = p_link_dataset(ageseq = age.seq,
                     post = post,
-                    input.list = mod.list,
+                    input.list = input.list,
                     dataset.i = dataset.is[k])
     lmu = unlist(lapply(lambda,  mean))
     lci = dplyr::bind_rows(lapply(lambda,  rethinking::PI))
