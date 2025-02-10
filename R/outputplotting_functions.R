@@ -392,7 +392,7 @@ plot_wrapper = function(species, stanmodel, plot.type, thin = 100){
   mod.list = marinelifehistdata::create_marinesurvival_modinput(input.dat)
 
   age.seq = seq(0, 100,1)
-  post = rstan::extract(mod)
+  post = rstan::extract(stanmodel)
   SP = species
   ages.at.mat =
     marinelifehistdata::marine.lifehist.speciesdata$species_age.maturity %>%
