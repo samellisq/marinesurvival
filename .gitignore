@@ -5,3 +5,4 @@
 guide/
 Development functions.R
 stanmodcode_function preR3.R
+stanmodcode_function alt ageesterror.R
