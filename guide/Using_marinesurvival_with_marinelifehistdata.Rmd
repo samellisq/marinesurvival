@@ -3,9 +3,9 @@ title: "Using_marinesurvival_with_marinelifehistdata"
 author: "S Ellis"
 date: "`r format(Sys.time(), '%d/%m/%Y')`"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
 ---
 
 ```{r, include = FALSE}
@@ -101,7 +101,17 @@ For simplicity, the stan code to run these models are stored as character vector
 stancode = get_marinesurvival_stancode(mod.list)
 ```
 
-The code and data can then be combined in either rstan or cmdstanr- here we use rstan:
+The code and data can then be combined in either rstan or cmdstanr. In my experience the models run faster, more smoothly and with less crashing (in fact without crashing) in cmdstanr. However the support functions were all developed to work with rstan objects, so if you want to use these functions the model must be converted from a cmdstanr object to an rstan object after running.
+
+To run the model in cmdstanr then convert it to an rstan object:
+
+```{r, eval = FALSE }
+cmdstanobj = cmdstanr::cmdstan_model(write_stan_file(stancode))
+cmdstanmod = cmdstanobj$sample(data = mod.list, chains = 4, parallel_chains = 4, init = generate_inits(4, mod.list))
+mod = rstan::read_stan_csv(mod$output_files())
+```
+
+Alternatively to run directly in rstan:
 
 ```{r, eval = FALSE }
 modobj = stan_model(model_code = stancode)
@@ -120,7 +130,7 @@ mod = sampling(
 mod = readRDS("lifespanmod_FM.ONLYNorthernRightWhaleDolphin.modfsSR.HMC.RDS")
 ```
 
-Ta da, model fit as an ordinary bayesian model. The summary data can be accessed but tends to be rather long becasue of all the estimates of unknown ages. The marinesurvival pacakge has a function called get_activeparameters to identify the non-age parameters present in the model which can then be used to somplfy the output. 
+Ta da, model fit as an ordinary Bayesian model. The summary data can be accessed but tends to be rather long because of all the estimates of unknown ages. The marinesurvival package has a function called get_activeparameters to identify the non-age parameters present in the model which can then be used to simplify the output. 
 
 ```{r}
 #summary(mod)$summary
@@ -128,7 +138,6 @@ out = summary(mod, digits = 4, depth = 2)$summary
 activepars = get_activepars(out = out, mod = mod, input.list = mod.list)
 out[rownames(out) %in% activepars,]
 ```
-
 
 
 And that is that.
@@ -169,5 +178,25 @@ plot_ageX(X = 0.1, post = post, age.seq = age.seq, input.list = mod.list, minage
 ageX.df = plot_ageX(X = 0.1, post = post, age.seq = age.seq, input.list = mod.list, minages = ages.at.mat, names.key = datasets.key, return.data = TRUE)
 ageX.df
 ```
+
+4. All of the plots and output in 1-3 can be accessed with the plot_wrapper function. (and avoids having to calcualte the age sequences etc manually)
+
+```{r, eval = FALSE}
+#For (1.)
+plot_wrapper(species = "NorthernRightWhaleDolphin", stanmodel = mod, plot.type == "mod.to.sample") # or ...plot.type == "a")
+
+#For (2.)
+#Additional parameter "thin" defines how many draws to make from the posterior to plot. Default is 100.
+plot_wrapper(species = "NorthernRightWhaleDolphin", stanmodel = mod, plot.type == "post.survival") # or ...plot.type == "b")
+
+#For (3.)
+#Additional parameter "thin" defines how many draws to make from the posterior when defining ageX. Default is 100 but should be higher for formal uses. 
+plot_wrapper(species = "NorthernRightWhaleDolphin", stanmodel = mod, plot.type == "ageX.plot") # or ...plot.type == "c")
+
+#For (3 but return data)
+#Additional parameter "thin" defines how many draws to make from the posterior when defining ageX. Default is 100 but should be higher for formal uses. 
+plot_wrapper(species = "NorthernRightWhaleDolphin", stanmodel = mod, plot.type == "ageX.data") # or ...plot.type == "d")
+```
+
 
 Here endeth the lesson. 
